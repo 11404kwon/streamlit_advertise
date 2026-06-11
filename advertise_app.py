@@ -1,24 +1,25 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import plotly.express as px
 
-# =========================
+# =====================================
 # 페이지 설정
-# =========================
+# =====================================
 st.set_page_config(
-    page_title="광고 매출 예측 AI",
+    page_title="Marketing Performance Dashboard",
     page_icon="📊",
     layout="wide"
 )
 
-# =========================
-# 모델 불러오기
-# =========================
+# =====================================
+# 모델 로드
+# =====================================
 model = joblib.load("advertise_model.pkl")
 
-# =========================
-# CSS 스타일
-# =========================
+# =====================================
+# CSS
+# =====================================
 st.markdown("""
 <style>
 
@@ -27,159 +28,259 @@ st.markdown("""
 }
 
 .block-container {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
 }
 
-h1 {
-    color: #1e3a8a;
+.metric-card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+[data-testid="metric-container"]{
+    background:white;
+    border-radius:15px;
+    padding:15px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
 .stButton > button {
-    width: 100%;
-    background: linear-gradient(90deg,#2563eb,#1d4ed8);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    height: 3.2rem;
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.stButton > button:hover {
-    background: #1d4ed8;
-    color: white;
-}
-
-[data-testid="metric-container"] {
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.05);
+    width:100%;
+    height:3.2rem;
+    border-radius:12px;
+    font-weight:bold;
+    font-size:17px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
+# =====================================
 # 사이드바
-# =========================
+# =====================================
 with st.sidebar:
-    st.title("📋 프로젝트 정보")
+
+    st.title("📋 Dashboard Info")
 
     st.markdown("""
-    **광고 매출 예측 시스템**
+### 광고 성과 예측 시스템
 
-    머신러닝 모델을 활용하여
+AI 모델을 이용하여
 
-    - TV 광고비
-    - 라디오 광고비
-    - 신문 광고비
+- TV 광고
+- Radio 광고
+- Newspaper 광고
 
-    를 기반으로 예상 매출을 예측합니다.
-    """)
+예산을 기반으로
+예상 판매량을 예측합니다.
+""")
 
     st.divider()
 
-    st.info("모델: Linear Regression")
+    st.success("Model Loaded")
 
-# =========================
-# 메인 제목
-# =========================
-st.title("📊 광고 매출 예측 AI")
+# =====================================
+# 헤더
+# =====================================
+st.title("📊 Marketing Performance Dashboard")
 
-st.markdown("""
-광고 예산을 입력하면 AI가 예상 매출을 분석합니다.
-""")
-
-st.info("💡 화폐 단위: 천 달러($1,000) 기준")
+st.caption(
+    "AI-Powered Advertising Forecast System"
+)
 
 st.divider()
 
-# =========================
-# 입력 영역
-# =========================
-col1, col2, col3 = st.columns(3)
+# =====================================
+# 탭
+# =====================================
+tab1, tab2, tab3 = st.tabs([
+    "📈 예측",
+    "📊 광고 분석",
+    "ℹ️ 모델 정보"
+])
 
-with col1:
-    tv_input = st.number_input(
-        "📺 TV 광고비",
-        min_value=0.0,
-        value=100.0,
-        step=1.0
-    )
+# =====================================
+# TAB1
+# =====================================
+with tab1:
 
-with col2:
-    radio_input = st.number_input(
-        "📻 라디오 광고비",
-        min_value=0.0,
-        value=20.0,
-        step=1.0
-    )
+    st.subheader("광고 예산 입력")
 
-with col3:
-    newspaper_input = st.number_input(
-        "📰 신문 광고비",
-        min_value=0.0,
-        value=10.0,
-        step=1.0
-    )
+    col1, col2, col3 = st.columns(3)
 
-st.write("")
+    with col1:
+        tv_input = st.number_input(
+            "📺 TV",
+            min_value=0.0,
+            value=100.0,
+            step=1.0
+        )
 
-# =========================
-# 예측 버튼
-# =========================
-if st.button("🚀 AI 분석 실행"):
+    with col2:
+        radio_input = st.number_input(
+            "📻 Radio",
+            min_value=0.0,
+            value=20.0,
+            step=1.0
+        )
 
-    try:
+    with col3:
+        newspaper_input = st.number_input(
+            "📰 Newspaper",
+            min_value=0.0,
+            value=10.0,
+            step=1.0
+        )
+
+    st.write("")
+
+    if st.button("🚀 AI 분석 실행"):
+
         feature_names = list(model.feature_names_in_)
 
-        new_store_data = pd.DataFrame(
+        new_data = pd.DataFrame(
             [[tv_input, radio_input, newspaper_input]],
             columns=feature_names
         )
 
-        predicted_sales = model.predict(new_store_data)
+        prediction = model.predict(new_data)[0]
+
+        total_budget = (
+            tv_input +
+            radio_input +
+            newspaper_input
+        )
+
+        roi = prediction / total_budget
 
         st.divider()
 
-        st.subheader("📈 분석 결과")
-
         # KPI 카드
-        colA, colB = st.columns(2)
+        k1, k2, k3 = st.columns(3)
 
-        with colA:
+        with k1:
             st.metric(
-                "예상 매출",
-                f"${predicted_sales[0] * 1000:,.0f}"
+                "예상 판매량",
+                f"{prediction:.2f}"
             )
 
-        with colB:
-            total_budget = tv_input + radio_input + newspaper_input
-
+        with k2:
             st.metric(
                 "총 광고비",
-                f"${total_budget * 1000:,.0f}"
+                f"${total_budget:,.0f}K"
+            )
+
+        with k3:
+            st.metric(
+                "광고 효율 지수",
+                f"{roi:.3f}"
             )
 
         st.success(
-            f"AI 예측 결과 예상 매출은 약 {predicted_sales[0]:.2f}천 달러입니다."
+            f"AI는 약 {prediction:.2f}의 판매 성과를 예측했습니다."
         )
 
-        # 광고비 그래프
-        st.subheader("📊 광고비 분포")
+        # 인사이트
+        st.subheader("🤖 AI Insight")
 
-        chart_data = pd.DataFrame({
-            "광고비": [
-                tv_input,
-                radio_input,
-                newspaper_input
-            ]
-        },
-        index=["TV", "Radio", "Newspaper"])
+        dominant = max(
+            tv_input,
+            radio_input,
+            newspaper_input
+        )
 
-        st.bar_chart(chart_data)
+        if dominant == tv_input:
+            st.info(
+                "TV 광고가 전체 예산의 가장 큰 비중을 차지합니다."
+            )
 
-    except Exception as e:
-        st.error(f"오류 발생: {e}")
+        elif dominant == radio_input:
+            st.info(
+                "Radio 광고 의존도가 높은 전략입니다."
+            )
+
+        else:
+            st.info(
+                "Newspaper 광고 비중이 높은 전략입니다."
+            )
+
+# =====================================
+# TAB2
+# =====================================
+with tab2:
+
+    st.subheader("광고비 분석")
+
+    budget_df = pd.DataFrame({
+        "매체": [
+            "TV",
+            "Radio",
+            "Newspaper"
+        ],
+        "광고비": [
+            tv_input,
+            radio_input,
+            newspaper_input
+        ]
+    })
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+
+        fig1 = px.pie(
+            budget_df,
+            values="광고비",
+            names="매체",
+            hole=0.55,
+            title="광고비 비중"
+        )
+
+        st.plotly_chart(
+            fig1,
+            use_container_width=True
+        )
+
+    with c2:
+
+        fig2 = px.bar(
+            budget_df,
+            x="매체",
+            y="광고비",
+            title="매체별 광고비"
+        )
+
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+# =====================================
+# TAB3
+# =====================================
+with tab3:
+
+    st.subheader("모델 정보")
+
+    st.markdown("""
+### 사용 모델
+
+- Linear Regression
+
+### 입력 변수
+
+- TV 광고비
+- Radio 광고비
+- Newspaper 광고비
+
+### 출력 변수
+
+- 예상 판매량
+
+### 목적
+
+광고 예산에 따른 판매 성과를
+예측하여 마케팅 의사결정을 지원합니다.
+""")
