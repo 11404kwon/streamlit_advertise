@@ -60,7 +60,7 @@ if st.button("🚀 매출 예측하기", use_container_width=True):
 
     new_store_data = pd.DataFrame(
         [[tv_input, radio_input, newspaper_input]],
-        columns=["TV", "Radio", "Newspaper"]
+        columns=["티비", "라디오", "신문"]
     )
 
     predicted_sales = model.predict(new_store_data)
