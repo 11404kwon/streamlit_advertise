@@ -20,64 +20,66 @@ st.set_page_config(
 # 제목
 # =========================
 st.title("📈 광고 매출 예측 AI")
-st.markdown("광고비를 입력하면 AI가 예상 매출을 예측합니다.")
+st.write("광고비를 입력하면 AI가 예상 매출을 예측합니다.")
 
-st.info(
-    "💡 화폐 단위: 천 달러($1,000) 기준\n\n"
-    "예: 100 입력 → $100,000"
-)
-
-st.divider()
+st.info("💡 화폐 단위: 천 달러($1,000) 기준")
 
 # =========================
-# 광고비 입력
+# 입력
 # =========================
 tv_input = st.number_input(
-    "📺 TV 광고비 (천 달러)",
+    "📺 TV 광고비",
     min_value=0.0,
-    value=100.0,
-    step=1.0
+    value=100.0
 )
 
 radio_input = st.number_input(
-    "📻 라디오 광고비 (천 달러)",
+    "📻 라디오 광고비",
     min_value=0.0,
-    value=20.0,
-    step=1.0
+    value=20.0
 )
 
 newspaper_input = st.number_input(
-    "📰 신문 광고비 (천 달러)",
+    "📰 신문 광고비",
     min_value=0.0,
-    value=10.0,
-    step=1.0
+    value=10.0
 )
 
 # =========================
 # 예측
 # =========================
-if st.button("🚀 매출 예측하기", use_container_width=True):
+if st.button("🚀 매출 예측하기"):
 
-    new_store_data = pd.DataFrame(
-        [[tv_input, radio_input, newspaper_input]],
-        columns=["티비", "라디오", "신문"]
-    )
+    try:
+        # 모델이 학습한 컬럼명 자동 가져오기
+        feature_names = list(model.feature_names_in_)
 
-    predicted_sales = model.predict(new_store_data)
+        # 입력값 매핑
+        values = [tv_input, radio_input, newspaper_input]
 
-    st.divider()
+        new_store_data = pd.DataFrame(
+            [values],
+            columns=feature_names
+        )
 
-    st.subheader("🎯 AI 예측 결과")
+        predicted_sales = model.predict(new_store_data)
 
-    st.success(
-        f"예상 매출은 약 {predicted_sales[0]:.2f}천 달러입니다."
-    )
+        st.success(
+            f"예상 매출: {predicted_sales[0]:.2f}천 달러"
+        )
 
-    st.metric(
-        label="예상 매출",
-        value=f"${predicted_sales[0] * 1000:,.0f}"
-    )
+        st.metric(
+            "예상 매출",
+            f"${predicted_sales[0] * 1000:,.0f}"
+        )
 
-    st.caption(
-        "※ 예측값은 머신러닝 모델을 기반으로 계산된 추정치입니다."
-    )
+    except Exception as e:
+        st.error(f"오류 발생: {e}")
+
+        st.subheader("모델 정보")
+
+        try:
+            st.write("학습 컬럼명:")
+            st.write(model.feature_names_in_)
+        except:
+            st.write("feature_names_in_ 정보를 찾을 수 없습니다.")
